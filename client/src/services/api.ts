@@ -89,7 +89,7 @@ export const api = {
     }).then(handleResponse),
 
   markPaid: (viajeId: number, staffId: number) =>
-    fetch(`${API_URL}/pagos/${viajeId}/${staffId}`, {
+    fetch(`${API_URL}/viajes/${viajeId}/pagos/${staffId}`, {
       method: "PUT",
       headers: getAuthHeaders(),
     }).then(handleResponse),
