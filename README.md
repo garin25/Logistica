@@ -7,13 +7,13 @@ Una aplicación web completa "Full Stack" para la administración de agencias de
 
 | Vista General | Detalles |
 |:---:|:---:|
-| ![Imagen 1](./assets/1.png) | ![Imagen 2](./assets/2.png) |
+| ![Imagen 1](./assets/1.PNG) | ![Imagen 2](./assets/2.PNG) |
 | **Sección 3** | **Sección 4** |
-| ![Imagen 3](./assets/3.png) | ![Imagen 4](./assets/4.png) |
+| ![Imagen 3](./assets/3.PNG) | ![Imagen 4](./assets/4.PNG) |
 | **Sección 5** | **Sección 6** |
-| ![Imagen 5](./assets/5.png) | ![Imagen 6](./assets/6.png) |
+| ![Imagen 5](./assets/5.PNG) | ![Imagen 6](./assets/6.PNG) |
 | **Sección 7** | **Sección 8** |
-| ![Imagen 7](./assets/7.png) | ![Imagen 8](./assets/8.png) |
+| ![Imagen 7](./assets/7.PNG) | ![Imagen 8](./assets/8.PNG) |
 ## 🚀 Características Principales
 
 * **Dashboard Inteligente:** Gráficos dinámicos de ganancias netas vs comisiones, filtrados por año.
