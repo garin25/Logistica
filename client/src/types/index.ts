@@ -65,3 +65,17 @@ export interface ConfirmData {
   total_cliente: number;
   staff_asignado: StaffAsignado[];
 }
+
+export interface Tarifa {
+  id: number;
+  nombre_vehiculo: string;
+  precio_particular: number;
+  precio_fabrica: number;
+}
+export interface StaffBackend {
+  id: number;
+  nombre: string;
+  rol: string;
+  es_externo: boolean;
+  cbu_alias: string;
+}

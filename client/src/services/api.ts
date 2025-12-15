@@ -1,4 +1,4 @@
-const API_URL = "http://localhost:3001/api";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
 // Helper para obtener el token guardado
 const getAuthHeaders = (): Record<string, string> => {
@@ -171,17 +171,3 @@ export const api = {
   },
 };
 
-// Exportamos interfaces que uses...
-export interface Tarifa {
-  id: number;
-  nombre_vehiculo: string;
-  precio_particular: number;
-  precio_fabrica: number;
-}
-export interface StaffBackend {
-  id: number;
-  nombre: string;
-  rol: string;
-  es_externo: boolean;
-  cbu_alias: string;
-}
