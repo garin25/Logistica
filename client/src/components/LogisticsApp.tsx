@@ -40,6 +40,15 @@ interface LogisticsAppProps {
 }
 
 export default function LogisticsApp({ onLogout }: LogisticsAppProps) {
+  const navItems = [
+    { id: "dashboard", label: "Dash", icon: LayoutGrid },
+    { id: "tomables", label: "Tomar", icon: AlertCircle },
+    { id: "agenda", label: "Agenda", icon: Calendar },
+    { id: "caja", label: "Caja", icon: Wallet },
+    { id: "archivados", label: "Arch.", icon: Archive },
+    { id: "recursos", label: "Config", icon: Settings },
+  ] as const;
+  
   // --- ESTADOS DE UI (Vistas y Navegación) ---
   const [view, setView] = useState<"dashboard" | "agenda" | "tomables" | "caja" | "archivados" | "recursos">("agenda");
   
@@ -192,7 +201,8 @@ export default function LogisticsApp({ onLogout }: LogisticsAppProps) {
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-slate-50 font-sans text-slate-800 flex flex-col md:flex-row">
-      {/* SIDEBAR */}
+      
+      {/* --- SIDEBAR (SOLO ESCRITORIO) --- */}
       <aside className="w-64 bg-slate-900 text-white hidden md:flex flex-col h-full flex-shrink-0">
         <div className="p-6 shrink-0">
           <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -201,12 +211,16 @@ export default function LogisticsApp({ onLogout }: LogisticsAppProps) {
         </div>
         
         <nav className="flex-1 px-4 space-y-2 overflow-y-auto">
-           <Button variant={view === "dashboard" ? "primary" : "secondary"} onClick={() => setView("dashboard")} className="w-full justify-start"><LayoutGrid className="mr-2" size={18}/> Dashboard</Button>
-           <Button variant={view === "tomables" ? "primary" : "secondary"} onClick={() => setView("tomables")} className="w-full justify-start"><AlertCircle className="mr-2" size={18}/> Tomables</Button>
-           <Button variant={view === "agenda" ? "primary" : "secondary"} onClick={() => setView("agenda")} className="w-full justify-start"><Calendar className="mr-2" size={18}/> Agenda</Button>
-           <Button variant={view === "caja" ? "primary" : "secondary"} onClick={() => setView("caja")} className="w-full justify-start"><Wallet className="mr-2" size={18}/> Caja</Button>
-           <Button variant={view === "archivados" ? "primary" : "secondary"} onClick={() => setView("archivados")} className="w-full justify-start"><Archive className="mr-2" size={18}/> Archivados</Button>
-           <Button variant={view === "recursos" ? "primary" : "secondary"} onClick={() => setView("recursos")} className="w-full justify-start"><Settings className="mr-2" size={18}/> Recursos</Button>
+           {navItems.map((item) => (
+             <Button 
+               key={item.id}
+               variant={view === item.id ? "primary" : "secondary"} 
+               onClick={() => setView(item.id)} 
+               className="w-full justify-start"
+             >
+               <item.icon className="mr-2" size={18}/> {item.label === "Dash" ? "Dashboard" : item.label === "Tomar" ? "Tomables" : item.label === "Arch." ? "Archivados" : item.label === "Config" ? "Recursos" : item.label}
+             </Button>
+           ))}
         </nav>
 
         <div className="p-4 border-t border-slate-800 shrink-0 space-y-2">
@@ -215,22 +229,22 @@ export default function LogisticsApp({ onLogout }: LogisticsAppProps) {
         </div>
       </aside>
 
-      {/* HEADER MÓVIL (Simple para ahorrar espacio en este ejemplo) */}
-      <header className="md:hidden bg-white border-b p-3 flex justify-between">
-         <span className="font-bold">Logística</span>
-         <button onClick={onLogout}><LogOut size={20}/></button>
-         {/* ... (Aquí irían tus botones de menú móvil) ... */}
+      {/* --- HEADER MÓVIL SUPERIOR (Solo Título y Salir) --- */}
+      <header className="md:hidden bg-white border-b p-3 flex justify-between items-center sticky top-0 z-30 shadow-sm shrink-0 h-14">
+         <span className="font-bold flex items-center gap-2 text-slate-700">
+            <Truck size={20} className="text-blue-600"/> Logística
+         </span>
+         <button onClick={onLogout} className="text-gray-500 hover:text-red-500">
+            <LogOut size={20}/>
+         </button>
       </header>
 
-      {/* CONTENIDO PRINCIPAL */}
-      <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50 relative">
+      {/* --- CONTENIDO PRINCIPAL --- */}
+      {/* Agregamos 'pb-24' (padding bottom) para que la barra móvil no tape el último elemento */}
+      <main className="flex-1 overflow-y-auto p-4 md:p-8 bg-slate-50 relative pb-24 md:pb-8">
         
         {view === "dashboard" && (
-          <Dashboard 
-            stats={dashboardStats} 
-            year={dashboardYear} 
-            onYearChange={setDashboardYear} 
-          />
+          <Dashboard stats={dashboardStats} year={dashboardYear} onYearChange={setDashboardYear} />
         )}
 
         {view === "agenda" && (
@@ -281,15 +295,40 @@ export default function LogisticsApp({ onLogout }: LogisticsAppProps) {
         )}
       </main>
 
-      {/* MODALES GLOBALES */}
-      {closingTrip && (
-        <CloseTripModal trip={closingTrip} config={config} onClose={() => setClosingTrip(null)} onConfirm={handleCloseConfirm} />
-      )}
-      
-      {voucherTrip && (
-        <VoucherModal trip={voucherTrip} onClose={() => setVoucherTrip(null)} />
-      )}
+      {/* --- BARRA DE NAVEGACIÓN INFERIOR (SOLO MÓVIL) --- */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-between items-center px-2 py-2 z-40 pb-safe shadow-[0_-2px_10px_rgba(0,0,0,0.05)]">
+        {navItems.map((item) => (
+          <button
+            key={item.id}
+            onClick={() => setView(item.id)}
+            className={`flex flex-col items-center justify-center w-full py-1 rounded-lg transition-colors ${
+              view === item.id 
+                ? "text-blue-600 bg-blue-50" 
+                : "text-gray-400 hover:text-gray-600"
+            }`}
+          >
+            <item.icon size={20} strokeWidth={view === item.id ? 2.5 : 2} />
+            <span className="text-[10px] font-medium mt-1">{item.label}</span>
+          </button>
+        ))}
+      </nav>
 
+      {/* BOTÓN FLOTANTE (Ajustado para subir arriba de la barra) */}
+      <button
+        onClick={() => {
+          setEditingTripId(null);
+          setFormDataForEdit(undefined);
+          setIsNewTripModalOpen(true);
+        }}
+        className="fixed bottom-20 right-4 md:hidden z-50 bg-blue-600 text-white p-3 rounded-full shadow-lg shadow-blue-600/30 active:scale-90 transition-all border-2 border-white"
+        title="Nuevo Viaje"
+      >
+        <Plus size={24} />
+      </button>
+
+      {/* ... MODALES GLOBALES (Igual que antes) ... */}
+      {closingTrip && <CloseTripModal trip={closingTrip} config={config} onClose={() => setClosingTrip(null)} onConfirm={handleCloseConfirm} />}
+      {voucherTrip && <VoucherModal trip={voucherTrip} onClose={() => setVoucherTrip(null)} />}
       {isNewTripModalOpen && (
         <div className="fixed inset-0 bg-black/60 z-50 flex items-center justify-center p-4">
            <div className="relative w-full max-w-4xl max-h-[95vh] flex flex-col">
@@ -304,10 +343,7 @@ export default function LogisticsApp({ onLogout }: LogisticsAppProps) {
            </div>
         </div>
       )}
-
-      {viewingTrip && (
-         <TripDetailsModal trip={viewingTrip} onClose={() => setViewingTrip(null)} />
-      )}
+      {viewingTrip && <TripDetailsModal trip={viewingTrip} onClose={() => setViewingTrip(null)} />}
     </div>
   );
 }
