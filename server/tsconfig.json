@@ -1,0 +1,18 @@
+{
+  "compilerOptions": {
+    /* Configuración Básica */
+    "target": "es2016",                                  /* Versión de JS a la que traduce */
+    "module": "commonjs",                                /* Node.js usa CommonJS por defecto */
+    "moduleResolution": "node",                          /* Cómo busca las librerías */
+    "outDir": "./dist",                                  /* Dónde guarda el código compilado */
+    "rootDir": "./src",                                  /* Dónde está tu código fuente */
+
+    /* Interoperabilidad (Clave para que funcionen los imports de Express/Cors) */
+    "esModuleInterop": true,                             /* Permite: import express from 'express' */
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,                                      /* Activa el tipado estricto */
+    "skipLibCheck": true                                 /* Salta chequeo de librerías internas para evitar errores ajenos */
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules"]
+}
