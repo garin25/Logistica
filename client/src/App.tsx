@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import LogisticsApp from './components/LogisticsApp';
-import Login from './components/Login';
+import Login from './components/auth/Login';
 
 function App() {
   const [user, setUser] = useState<any>(null);

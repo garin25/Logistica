@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Truck, Lock, Mail, Loader2, User, Building2, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { api } from '../services/api';
+import { api } from '../../services/api';
 
 interface LoginProps {
   onLoginSuccess: (user: any) => void;
