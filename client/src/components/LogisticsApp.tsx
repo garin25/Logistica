@@ -33,6 +33,7 @@ import { VoucherModal } from "./logistics/modals/VoucherModal";
 
 // Tipos
 import type { Viaje, ConfirmData } from "../types";
+import { FullPageLoader } from "./ui/FullPageLoader";
 
 // --- PROPS ---
 interface LogisticsAppProps {
@@ -197,7 +198,7 @@ export default function LogisticsApp({ onLogout }: LogisticsAppProps) {
 
   // --- RENDER ---
 
-  if (loading) return <div className="flex h-screen items-center justify-center bg-slate-50 text-slate-500">Cargando sistema...</div>;
+  if (loading) return <FullPageLoader/>;
 
   return (
     <div className="h-screen w-screen overflow-hidden bg-slate-50 font-sans text-slate-800 flex flex-col md:flex-row">
