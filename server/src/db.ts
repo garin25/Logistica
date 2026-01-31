@@ -1,3 +1,4 @@
+import { PrismaClient } from '@prisma/client';
 import { Pool } from 'pg';
 import 'dotenv/config'; 
 
@@ -19,3 +20,17 @@ pool.on('error', (err) => {
   console.error('❌ Error inesperado en el cliente de PG', err);
   process.exit(-1);
 });
+
+const globalForPrisma = global as unknown as { prisma: PrismaClient };
+
+export const prisma =
+  globalForPrisma.prisma ||
+  new PrismaClient({
+    // Opcional: Esto te muestra las queries en la consola (útil para debug)
+    log: ['query', 'info', 'warn', 'error'],
+  });
+
+if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;
+/*const prisma = new PrismaClient()
+
+export default prisma*/

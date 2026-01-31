@@ -1,17 +1,16 @@
-import { pool } from '../db';
 import { ViajeRepository } from '../repositories/ViajeRepository';
 
 // DTOs (Data Transfer Objects)
-interface CreateViajeDTO {
+export interface CreateViajeDTO {
   cliente: string;
   origen: string;
   destinos: string[];
-  fecha: string;
-  hora: string;
-  choferId?: number;
-  peonesIds?: number[];
-  tipoCamioneta: string;
-  tipoTarifa?: string;
+  fecha: Date;
+  hora: Date;
+  choferId?: number | undefined;
+  peonesIds?: any;
+  tipoCamioneta: string |undefined;
+  tipoTarifa?: string | undefined; 
 }
 
 interface CloseViajeDTO {
@@ -36,18 +35,25 @@ export const ViajeService = {
 
   // 2. Crear Viaje
   createViaje: async (agenciaId: number, data: CreateViajeDTO) => {
-    const client = await pool.connect();
     try {
-      await client.query('BEGIN'); // Inicio Transacción
 
       // Lógica de negocio
       const choferIdSafe = data.choferId && Number(data.choferId) > 0 ? Number(data.choferId) : null;
       const estado = choferIdSafe ? 'pendiente' : 'tomable';
       const tipoTarifaSafe = data.tipoTarifa || 'particular';
-      const destinosStr = JSON.stringify(data.destinos);
 
       // Guardar cabecera usando Repository
-      const viajeId = await ViajeRepository.create(client, {
+
+      const viajeId =  await ViajeRepository.create({
+      ...data,     
+      choferId:choferIdSafe,     
+      estado,       
+      tipoTarifa:tipoTarifaSafe,    
+      agenciaId: agenciaId,
+      destinos:data.destinos,
+      tipoCamioneta:data.tipoCamioneta
+    });
+      /*const viajeId = await ViajeRepository.create({
         agenciaId,
         cliente: data.cliente,
         origen: data.origen,
@@ -58,44 +64,40 @@ export const ViajeService = {
         choferId: choferIdSafe,
         tipoCamioneta: data.tipoCamioneta,
         tipoTarifa: tipoTarifaSafe
-      });
+      });*/
 
       // Guardar Staff usando Repository
       if (choferIdSafe) {
-        await ViajeRepository.addStaff(client, viajeId, choferIdSafe, 'chofer');
+        await ViajeRepository.addStaff(viajeId, choferIdSafe, 'chofer');
       }
       
       if (data.peonesIds && data.peonesIds.length > 0) {
         for (const pid of data.peonesIds) {
           if (Number(pid) !== choferIdSafe) {
-             await ViajeRepository.addStaff(client, viajeId, Number(pid), 'peon');
+             await ViajeRepository.addStaff(viajeId, Number(pid), 'peon');
           }
         }
       }
 
-      await client.query('COMMIT'); // Fin Transacción
       return viajeId;
 
     } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
-    }
+       console.error("Error al crear el viaje:", error);
+      // Aquí podrías borrar el viaje creado  (rollback manual),
+      throw new Error('Hubo un error al crear el viaje. Intente nuevamente.');
+    } 
   },
 
   // 3. Actualizar Viaje
   updateViaje: async (agenciaId: number, viajeId: number, data: CreateViajeDTO) => {
-    const client = await pool.connect();
     try {
-      await client.query('BEGIN');
 
       const choferIdSafe = data.choferId && Number(data.choferId) > 0 ? Number(data.choferId) : null;
       const estado = choferIdSafe ? 'pendiente' : 'tomable';
       const destinosStr = JSON.stringify(data.destinos);
 
       // Actualizar datos básicos
-      const rowCount = await ViajeRepository.update(client, viajeId, agenciaId, {
+      const rowCount = await ViajeRepository.update(viajeId, agenciaId, {
         cliente: data.cliente,
         origen: data.origen,
         destinos: destinosStr,
@@ -111,37 +113,33 @@ export const ViajeService = {
       }
 
       // Re-hacer staff (Borrar viejo -> Poner nuevo)
-      await ViajeRepository.clearStaff(client, viajeId);
+      await ViajeRepository.clearStaff(viajeId);
 
       if (choferIdSafe) {
-        await ViajeRepository.addStaff(client, viajeId, choferIdSafe, 'chofer');
+        await ViajeRepository.addStaff(viajeId, choferIdSafe, 'chofer');
       }
 
       if (data.peonesIds && data.peonesIds.length > 0) {
         for (const pid of data.peonesIds) {
           if (Number(pid) !== choferIdSafe) {
-            await ViajeRepository.addStaff(client, viajeId, Number(pid), 'peon');
+            await ViajeRepository.addStaff(viajeId, Number(pid), 'peon');
           }
         }
       }
 
-      await client.query('COMMIT');
     } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
+      console.error("Error al actualizar el viaje:", error);
+      // Aquí podrías borrar el viaje creado  (rollback manual),
+      throw new Error('Hubo un error al actualizar el viaje. Intente nuevamente.');
     }
   },
 
   // 4. Cerrar Viaje
   closeViaje: async (agenciaId: number, viajeId: number, data: CloseViajeDTO) => {
-    const client = await pool.connect();
     try {
-      await client.query('BEGIN');
 
       // Actualizar estado y precios finales
-      const rowCount = await ViajeRepository.close(client, viajeId, agenciaId, {
+      const rowCount = await ViajeRepository.close(viajeId, agenciaId, {
         horasReales: data.horasReales,
         peajes: data.peajes,
         precioFinalCliente: data.precioFinalCliente
@@ -153,16 +151,14 @@ export const ViajeService = {
 
       // Actualizar pagos individuales del staff
       for (const pago of data.pagos) {
-        await ViajeRepository.updateStaffPaymentAmount(client, viajeId, pago.staffId, pago.monto);
+        await ViajeRepository.updateStaffPaymentAmount(viajeId, pago.staffId, pago.monto);
       }
 
-      await client.query('COMMIT');
     } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
-    }
+     console.error("Error al cerrar el viaje:", error);
+      // Aquí podrías borrar el viaje creado  (rollback manual),
+      throw new Error('Hubo un error al cerrar el viaje. Intente nuevamente.');
+    } 
   },
 
   // 5. Archivar

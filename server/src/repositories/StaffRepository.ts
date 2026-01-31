@@ -1,15 +1,27 @@
-import { pool } from '../db';
+import { prisma } from "../db";
 
 export const StaffRepository = {
   async create(agenciaId: number, data: { nombre: string, rol: string, alias: string, esExterno: boolean }) {
-    await pool.query(
-      'INSERT INTO staff (agencia_id, nombre, rol, cbu_alias, es_externo) VALUES ($1, $2, $3, $4, $5)',
-      [agenciaId, data.nombre, data.rol, data.alias, data.esExterno]
+    await prisma.staff.create({
+      data:{
+        agencia_id:agenciaId,
+        nombre:data.nombre,
+        rol:data.rol,
+        cbu_alias:data.alias,
+        es_externo:data.esExterno
+      }   
+    }
     );
   },
 
   async delete(id: number, agenciaId: number) {
-    const result = await pool.query('DELETE FROM staff WHERE id = $1 AND agencia_id = $2', [id, agenciaId]);
-    return result.rowCount;
+    const result = await prisma.staff.deleteMany({
+      where: {
+        id: id,
+        agencia_id: agenciaId,
+      },
+    });
+
+    return result.count;
   }
 };

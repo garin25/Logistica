@@ -1,8 +1,11 @@
-import { pool } from '../db';
+import { prisma } from "../db";
 
 export const StatsRepository = {
   async getDashboardStats(agenciaId: number, year: number) {
-    const query = `
+     const idSafe = Number(agenciaId);
+     const yearSafe = Number(year);
+  // Prisma usa "Tagged Templates" (las comillas invertidas ``) para seguridad
+  const result = await prisma.$queryRaw`
       SELECT 
         EXTRACT(MONTH FROM v.fecha_viaje) as mes,
         SUM(
@@ -25,14 +28,21 @@ export const StatsRepository = {
         ) as ganancia_admin
       FROM viajes v
       LEFT JOIN staff s ON v.chofer_id = s.id
-      WHERE v.agencia_id = $1 
+      WHERE v.agencia_id = ${idSafe} 
         AND v.estado IN ('cerrado', 'archivado')
-        AND EXTRACT(YEAR FROM v.fecha_viaje) = $2
+        AND EXTRACT(YEAR FROM v.fecha_viaje) = ${yearSafe}
       GROUP BY mes
       ORDER BY mes ASC;
-    `;
-    
-    const result = await pool.query(query, [agenciaId, year]);
-    return result.rows;
-  }
+  `;
+
+  // IMPORTANTE: Postgres devuelve los SUM y COUNT como BigInt (123n).
+  // JSON.stringify no sabe leer BigInt, así que hay que convertirlos a Number.
+  const stats = (result as any[]).map(row => ({
+    mes: Number(row.mes),
+    ganancia_comision: Number(row.ganancia_comision || 0),
+    ganancia_admin: Number(row.ganancia_admin || 0)
+  }));
+
+  return stats;
+}
 };

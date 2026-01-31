@@ -145,6 +145,8 @@ export default function NuevoViajeForm({
       peonesIds: formData.peonesIds.filter((id) => id !== ""),
       destinos: formData.destinos.filter((d) => d.trim() !== ""),
     };
+
+    console.log(payload);
     onSubmit(payload);
   };
 

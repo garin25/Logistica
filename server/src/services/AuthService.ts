@@ -1,6 +1,5 @@
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
-import { pool } from '../db';
 import { AuthRepository } from '../repositories/AuthRepository';
 
 // Aseguramos la clave secreta
@@ -18,35 +17,30 @@ export const AuthService = {
       throw new Error('El email ya está registrado'); // Mensaje seguro para el usuario
     }
 
-    const client = await pool.connect();
     try {
-      await client.query('BEGIN');
-
       // 1. Crear Agencia
-      const agenciaId = await AuthRepository.createAgency(client, nombreAgencia);
+      const nuevaAgencia = await AuthRepository.createAgency(nombreAgencia);
 
       // 2. Hashear Password
       const hashedPassword = await bcrypt.hash(password, 10);
 
       // 3. Crear Usuario
-      await AuthRepository.createUser(client, {
+      await AuthRepository.createUser({
         nombre,
         email,
         password: hashedPassword,
-        agenciaId
+        agenciaId :nuevaAgencia.id
       });
 
       // 4. Crear Tarifas Default
-      await AuthRepository.createDefaultTariffs(client, agenciaId);
+      await AuthRepository.createDefaultTariffs(nuevaAgencia.id);
 
-      await client.query('COMMIT');
       return { success: true };
 
     } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
-    } finally {
-      client.release();
+      console.error("Error en registro:", error);
+      // Aquí podrías borrar la agencia creada si falla el usuario (rollback manual),
+      throw new Error('Hubo un error al procesar el registro. Intente nuevamente.');
     }
   },
 

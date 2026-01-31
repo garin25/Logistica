@@ -1,0 +1,100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model agencias {
+  id             Int        @id @default(autoincrement())
+  nombre         String     @db.VarChar(100)
+  email_contacto String?    @db.VarChar(100)
+  fecha_creacion DateTime?  @default(now()) @db.Timestamp(6)
+  clientes       clientes[]
+  staff          staff[]
+  tarifas        tarifas[]
+  usuarios       usuarios[]
+  viajes         viajes[]
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model clientes {
+  id                Int       @id @default(autoincrement())
+  agencia_id        Int?
+  nombre            String?   @db.VarChar(100)
+  direccion_defecto String?   @db.VarChar(200)
+  tipo_tarifa       String?   @default("particular") @db.VarChar(20)
+  agencias          agencias? @relation(fields: [agencia_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model staff {
+  id          Int           @id @default(autoincrement())
+  agencia_id  Int?
+  nombre      String?       @db.VarChar(100)
+  rol         String?       @db.VarChar(20)
+  es_externo  Boolean?      @default(false)
+  cbu_alias   String?       @db.VarChar(100)
+  agencias    agencias?     @relation(fields: [agencia_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  viaje_staff viaje_staff[]
+  viajes      viajes[]
+}
+
+model tarifas {
+  id                Int       @id @default(autoincrement())
+  agencia_id        Int?
+  nombre_vehiculo   String?   @db.VarChar(50)
+  precio_fabrica    Decimal?  @default(0) @db.Decimal(10, 2)
+  precio_particular Decimal?  @default(0) @db.Decimal(10, 2)
+  agencias          agencias? @relation(fields: [agencia_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model usuarios {
+  id         Int       @id @default(autoincrement())
+  agencia_id Int?
+  nombre     String?   @db.VarChar(100)
+  email      String    @unique @db.VarChar(100)
+  password   String    @db.VarChar(255)
+  created_at DateTime? @default(now()) @db.Timestamp(6)
+  agencias   agencias? @relation(fields: [agencia_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([email], map: "idx_usuarios_email")
+}
+
+model viaje_staff {
+  id             Int       @id @default(autoincrement())
+  viaje_id       Int?
+  staff_id       Int?
+  rol            String?   @db.VarChar(20)
+  monto_a_cobrar Decimal?  @default(0) @db.Decimal(10, 2)
+  pagado         Boolean?  @default(false)
+  fecha_pago     DateTime? @db.Timestamp(6)
+  staff          staff?    @relation(fields: [staff_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  viajes         viajes?   @relation(fields: [viaje_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+}
+
+model viajes {
+  id             Int           @id @default(autoincrement())
+  agencia_id     Int?
+  cliente_nombre String?       @db.VarChar(100)
+  origen         String?       @db.VarChar(200)
+  destinos       String?
+  tipo_camioneta String?       @db.VarChar(50)
+  precio_final   Decimal?      @default(0) @db.Decimal(12, 2)
+  estado         String?       @default("pendiente") @db.VarChar(20)
+  peajes         Decimal?      @default(0) @db.Decimal(10, 2)
+  horas_reales   Decimal?      @default(0) @db.Decimal(4, 1)
+  fecha_viaje    DateTime?     @db.Date
+  hora_viaje     DateTime?     @db.Time(6)
+  chofer_id      Int?
+  created_at     DateTime?     @default(now()) @db.Timestamp(6)
+  tipo_tarifa    String?       @default("particular") @db.VarChar(20)
+  viaje_staff    viaje_staff[]
+  agencias       agencias?     @relation(fields: [agencia_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  staff          staff?        @relation(fields: [chofer_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@index([agencia_id], map: "idx_viajes_agencia")
+  @@index([fecha_viaje], map: "idx_viajes_fecha")
+}

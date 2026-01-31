@@ -1,25 +1,44 @@
-import { pool } from '../db';
+import { prisma } from "../db";
 
 export const VehiculoRepository = {
   async create(agenciaId: number, data: { nombre: string, precioParticular: number, precioFabrica: number }) {
-    await pool.query(
-      'INSERT INTO tarifas (agencia_id, nombre_vehiculo, precio_particular, precio_fabrica) VALUES ($1, $2, $3, $4)',
-      [agenciaId, data.nombre, data.precioParticular, data.precioFabrica]
+    await prisma.tarifas.create({
+      data:{
+        agencia_id:agenciaId,
+        nombre_vehiculo:data.nombre,
+        precio_particular:data.precioParticular,
+        precio_fabrica:data.precioFabrica
+      }
+    }
     );
   },
 
   async update(id: number, agenciaId: number, data: { nombre: string, precioParticular: number, precioFabrica: number }) {
-    const result = await pool.query(
-      `UPDATE tarifas 
-       SET nombre_vehiculo = $1, precio_particular = $2, precio_fabrica = $3 
-       WHERE id = $4 AND agencia_id = $5`,
-      [data.nombre, data.precioParticular, data.precioFabrica, id, agenciaId]
-    );
-    return result.rowCount;
+    const result = await prisma.tarifas.updateMany({
+      where: {
+        id: id,
+        agencia_id: agenciaId, // Condición de seguridad (WHERE id AND agencia_id)
+      },
+      data: {
+        // Mapeamos tus datos a las columnas de la DB
+        nombre_vehiculo: data.nombre,
+        precio_particular: data.precioParticular,
+        precio_fabrica: data.precioFabrica,
+      },
+    });
+
+    // Prisma devuelve un objeto { count: 1 }, que es equivalente a result.rowCount
+    return result.count; 
   },
 
   async delete(id: number, agenciaId: number) {
-    const result = await pool.query('DELETE FROM tarifas WHERE id = $1 AND agencia_id = $2', [id, agenciaId]);
-    return result.rowCount;
+    const result = await prisma.tarifas.deleteMany({
+      where: {
+        id: id,
+        agencia_id: agenciaId,
+      },
+    });
+
+    return result.count;
   }
 };
