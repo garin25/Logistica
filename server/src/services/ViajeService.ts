@@ -9,8 +9,8 @@ export interface CreateViajeDTO {
   hora: Date;
   choferId?: number | undefined;
   peonesIds?: any;
-  tipoCamioneta: string |undefined;
-  tipoTarifa?: string | undefined; 
+  tipoCamioneta: string | undefined;
+  tipoTarifa?: string | undefined;
 }
 
 interface CloseViajeDTO {
@@ -25,11 +25,11 @@ export const ViajeService = {
   // 1. Obtener Viajes Activos
   getActiveViajes: async (agenciaId: number) => {
     const rows = await ViajeRepository.findAllActive(agenciaId);
-    
+
     // Convertimos el JSON string de destinos a objeto JS real
     return rows.map(row => ({
-        ...row,
-        destinos: typeof row.destinos === 'string' ? JSON.parse(row.destinos) : row.destinos
+      ...row,
+      destinos: typeof row.destinos === 'string' ? JSON.parse(row.destinos) : row.destinos
     }));
   },
 
@@ -44,37 +44,24 @@ export const ViajeService = {
 
       // Guardar cabecera usando Repository
 
-      const viajeId =  await ViajeRepository.create({
-      ...data,     
-      choferId:choferIdSafe,     
-      estado,       
-      tipoTarifa:tipoTarifaSafe,    
-      agenciaId: agenciaId,
-      destinos:data.destinos,
-      tipoCamioneta:data.tipoCamioneta
-    });
-      /*const viajeId = await ViajeRepository.create({
-        agenciaId,
-        cliente: data.cliente,
-        origen: data.origen,
-        destinos: destinosStr,
-        fecha: data.fecha,
-        hora: data.hora,
-        estado,
+      const viajeId = await ViajeRepository.create({
+        ...data,
         choferId: choferIdSafe,
-        tipoCamioneta: data.tipoCamioneta,
-        tipoTarifa: tipoTarifaSafe
-      });*/
+        estado,
+        tipoTarifa: tipoTarifaSafe,
+        agenciaId: agenciaId,
+        destinos: data.destinos,
+        tipoCamioneta: data.tipoCamioneta
+      });
 
-      // Guardar Staff usando Repository
       if (choferIdSafe) {
         await ViajeRepository.addStaff(viajeId, choferIdSafe, 'chofer');
       }
-      
+
       if (data.peonesIds && data.peonesIds.length > 0) {
         for (const pid of data.peonesIds) {
           if (Number(pid) !== choferIdSafe) {
-             await ViajeRepository.addStaff(viajeId, Number(pid), 'peon');
+            await ViajeRepository.addStaff(viajeId, Number(pid), 'peon');
           }
         }
       }
@@ -82,10 +69,10 @@ export const ViajeService = {
       return viajeId;
 
     } catch (error) {
-       console.error("Error al crear el viaje:", error);
+      console.error("Error al crear el viaje:", error);
       // Aquí podrías borrar el viaje creado  (rollback manual),
       throw new Error('Hubo un error al crear el viaje. Intente nuevamente.');
-    } 
+    }
   },
 
   // 3. Actualizar Viaje
@@ -150,15 +137,17 @@ export const ViajeService = {
       }
 
       // Actualizar pagos individuales del staff
-      for (const pago of data.pagos) {
+      const listaPagos = data.pagos || [];
+
+      for (const pago of listaPagos) {
         await ViajeRepository.updateStaffPaymentAmount(viajeId, pago.staffId, pago.monto);
       }
 
     } catch (error) {
-     console.error("Error al cerrar el viaje:", error);
+      console.error("Error al cerrar el viaje:", error);
       // Aquí podrías borrar el viaje creado  (rollback manual),
       throw new Error('Hubo un error al cerrar el viaje. Intente nuevamente.');
-    } 
+    }
   },
 
   // 5. Archivar
@@ -182,10 +171,10 @@ export const ViajeService = {
   // 8. Histórico
   getHistory: async (agenciaId: number, fechaInicio?: string, fechaFin?: string) => {
     const rows = await ViajeRepository.findHistory(agenciaId, fechaInicio, fechaFin);
-    
+
     return rows.map(row => ({
-        ...row,
-        destinos: typeof row.destinos === 'string' ? JSON.parse(row.destinos) : row.destinos
+      ...row,
+      destinos: typeof row.destinos === 'string' ? JSON.parse(row.destinos) : row.destinos
     }));
   }
 };

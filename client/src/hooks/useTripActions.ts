@@ -1,54 +1,92 @@
+// hooks/useTripActions.ts
 import { api } from "../services/api";
-import type { ConfirmData, Viaje } from "../types";
+import type { Viaje, ConfirmData, Config } from "../types"; 
+import type { NuevoViajeData } from "../components/NuevoViajeForm";
 
-export const useTripActions = (reloadTrips: () => void) => {
-  
-  const closeTrip = async (trip: Viaje, data: ConfirmData) => {
-    try {
-      await api.closeViaje(trip.id, {
-        horasReales: data.horas_reales,
-        peajes: data.peajes,
-        precioFinalCliente: data.total_cliente,
-        pagos: data.staff_asignado.map((s) => ({
-          staffId: s.staff_id,
-          monto: s.monto_a_cobrar,
-          rol: s.rol,
-        })),
-      });
-      await reloadTrips();
-    } catch (error) {
-      alert("Error al cerrar viaje");
-      throw error; // Relanzamos para que el modal sepa
-    }
-  };
+export const useTripActions = (
+  refreshData: () => Promise<void>, 
+  config: Config 
+) => {
 
-  const markPaid = async (tripId: number, staffId: number) => {
+  const deleteTrip = async (id: number) => {
+    if (!confirm("¿Estás seguro de eliminar este viaje?")) return;
     try {
-      await api.markPaid(tripId, staffId);
-      await reloadTrips();
-    } catch (error) {
-      alert("Error marcando pago");
-    }
-  };
-
-  const archiveTrip = async (tripId: number) => {
-    try {
-      await api.archiveViaje(tripId);
-      await reloadTrips();
-    } catch (error) {
-      alert("Error al archivar");
-    }
-  };
-
-  const deleteTrip = async (tripId: number) => {
-    if (!window.confirm("¿Estás seguro de que quieres ELIMINAR este viaje?")) return;
-    try {
-      await api.deleteViaje(tripId);
-      await reloadTrips();
-    } catch (error) {
+      await api.deleteViaje(id);
+      await refreshData();
+    } catch (e) {
       alert("Error al eliminar");
     }
   };
 
-  return { closeTrip, markPaid, archiveTrip, deleteTrip };
+  const markPaid = async (viajeId: number, staffId: number) => {
+    try {
+      await api.markPaid(viajeId, staffId);
+      await refreshData();
+    } catch (e) {
+      console.error(e);
+      alert("Error al marcar como pagado");
+    }
+  };
+
+  const archiveTrip = async (tripId: number) => {
+    if (!confirm("¿Archivar este viaje? Desaparecerá de la lista activa.")) return;
+    try {
+      await api.archiveViaje(tripId);
+      await refreshData();
+    } catch (e) {
+      alert("Error al archivar");
+    }
+  };
+
+  const closeTrip = async (trip: Viaje, data: ConfirmData) => {
+    try {
+      await api.closeViaje(trip.id, data);
+      await refreshData();
+    } catch (e) {
+      alert("Error al cerrar el viaje");
+    }
+  };
+
+  // 👇 LA FUNCIÓN NUEVA QUE USA TU CONFIG
+  const saveTrip = async (data: NuevoViajeData, editingId: number | null): Promise<boolean> => {
+    try {
+      // Usamos tu config.clientes_disponibles que ya tienes definida
+      const clienteObj = config.clientes_disponibles?.find(
+        (c) => c.id === Number(data.clienteId)
+      );
+
+      const payload = {
+        cliente: clienteObj ? clienteObj.nombre : "Cliente Desconocido",
+        origen: data.origen,
+        destinos: data.destinos,
+        fecha: data.fecha,
+        hora: data.hora,
+        tipoCamioneta: data.vehiculoId, 
+        choferId: data.choferId ? Number(data.choferId) : undefined,
+        peonesIds: data.peonesIds.map(Number),
+        tipoTarifa: data.tipoTarifa,
+      };
+
+      if (editingId) {
+        await api.updateViaje(editingId, payload);
+      } else {
+        await api.createViaje(payload);
+      }
+
+      await refreshData(); 
+      return true;
+    } catch (error) {
+      console.error(error);
+      alert("Error al guardar el viaje");
+      return false;
+    }
+  };
+
+  return {
+    deleteTrip,
+    markPaid,
+    archiveTrip,
+    closeTrip,
+    saveTrip, 
+  };
 };

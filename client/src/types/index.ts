@@ -60,10 +60,15 @@ export type EstadoViaje = "tomable" | "pendiente" | "cerrado" | "archivado";
 
 // Compartidas
 export interface ConfirmData {
-  horas_reales: number;
+  precioFinal: number;        // Antes era 'total_cliente'
   peajes: number;
-  total_cliente: number;
-  staff_asignado: StaffAsignado[];
+  horasReales: number;        // Antes era 'horas_reales' (camelCase es mejor para JS)
+  observaciones?: string;
+  pagos: {                    // Antes era 'staff_asignado' (pero necesitamos formato pago)
+    staffId: number;
+    monto: number;
+    rol?: string;
+  }[]; 
 }
 
 export interface Tarifa {

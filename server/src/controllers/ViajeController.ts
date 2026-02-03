@@ -64,6 +64,30 @@ const createViajeSchema = z.object({
     tipoTarifa: data.tipoTarifa
   };
 });
+
+
+
+const closeViajeSchema = z.object({
+  precioFinal: z.coerce.number().min(0, "El precio no puede ser negativo"),
+  peajes: z.coerce.number().optional().default(0),
+  horasReales: z.coerce.number().optional().default(0),
+  observaciones: z.string().optional(),
+
+  pagos: z.array(z.object({
+      staffId: z.number(),
+      monto: z.number(),
+      rol: z.string().optional().default("staff") 
+  })).optional().default([])
+})
+.transform((data) => {
+  return {
+    precioFinalCliente: data.precioFinal,
+    peajes: data.peajes,
+    horasReales: data.horasReales,
+    observaciones: data.observaciones,
+    pagos: data.pagos // Ahora 'pagos' garantiza que rol siempre es string
+  };
+});
 export const ViajeController = {
 
 
@@ -120,7 +144,8 @@ export const ViajeController = {
       // 👇 FIX
       const agenciaId = (req as any).user.agenciaId;
 
-      await ViajeService.closeViaje(agenciaId, Number(id), req.body);
+       const dto = closeViajeSchema.parse(req.body);
+      await ViajeService.closeViaje(agenciaId, Number(id), dto);
 
       res.json({ message: 'Viaje cerrado correctamente' });
     } catch (error) {
