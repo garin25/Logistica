@@ -42,12 +42,22 @@ export const api = {
       body: JSON.stringify(data),
     }).then(handleResponse),
 
-  login: (email: string, password: string) =>
-    fetch(`${API_URL}/login`, {
+  login: async (email: string, password: string) => {
+    const response = await fetch(`${API_URL}/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
-    }).then(handleResponse),
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      // Buscamos tanto 'error' como 'message'
+      throw new Error(data.error || data.message || "Error al iniciar sesión");
+    }
+
+    return data;
+  },
 
   // --- DATOS (Ahora usan getAuthHeaders) ---
 

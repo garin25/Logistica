@@ -7,15 +7,15 @@ export const AuthController = {
   register: async (req: Request, res: Response, next: NextFunction) => {
     try {
       await AuthService.register(req.body);
-      res.status(201).json({ 
-        message: 'Usuario registrado correctamente. Por favor inicia sesión.' 
+      res.status(201).json({
+        message: 'Usuario registrado correctamente. Por favor inicia sesión.'
       });
     } catch (error: any) {
       // Si es un error de negocio (ej: mail duplicado), mandamos 400
       if (error.message === 'El email ya está registrado') {
-         res.status(400).json({ error: error.message });
+        res.status(400).json({ error: error.message });
       } else {
-         next(error); // Error 500 genérico
+        next(error); // Error 500 genérico
       }
     }
   },
@@ -25,13 +25,16 @@ export const AuthController = {
     try {
       const { email, password } = req.body;
       const result = await AuthService.login(email, password);
+      if (!result) {
+        return res.status(404).json({ message: "Usuario no encontrado" });// mirar servicio , no se envia igual.
+      }
       res.json(result);
     } catch (error: any) {
       // Si falla login, mandamos 401
       if (error.message === 'Credenciales inválidas') {
-         res.status(401).json({ error: error.message });
+        res.status(401).json({ error: error.message });
       } else {
-         next(error);
+        next(error);
       }
     }
   },
