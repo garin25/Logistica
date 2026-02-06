@@ -1,7 +1,6 @@
-import React from 'react';
 import { Calendar, DollarSign, MapPin, Truck, User, X } from "lucide-react";
-import type { Viaje } from './LogisticsApp';
-// Asegúrate de que la ruta sea correcta. Si Viaje está en LogisticsApp.tsx o App.tsx:
+//import type { Viaje } from './LogisticsApp';
+import type { Viaje } from "../types"; // Asegúrate de que la ruta sea correcta según tu estructura de carpetas
 
 interface TripDetailsModalProps {
   trip: Viaje;

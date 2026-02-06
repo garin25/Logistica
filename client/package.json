@@ -16,6 +16,8 @@
     "@mui/icons-material": "^7.3.6",
     "@mui/material": "^7.3.6",
     "@tailwindcss/postcss": "^4.1.18",
+    "@tanstack/react-query": "^5.90.20",
+    "@tanstack/react-query-devtools": "^5.91.3",
     "autoprefixer": "^10.4.22",
     "lucide-react": "^0.561.0",
     "postcss": "^8.5.6",
