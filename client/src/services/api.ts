@@ -110,7 +110,7 @@ export const api = {
       headers: getAuthHeaders(),
     }).then(handleResponse),
   // CLIENTES
- createCliente: (data: { nombre: string; direccion: string; tipoTarifa: string }) => // <--- Agregado tipoTarifa
+ createCliente: (data: { nombre: string; direccion?: string; tipoTarifa: string }) => // <--- Agregado tipoTarifa
     fetch(`${API_URL}/clientes`, {
       method: 'POST',
       headers: getAuthHeaders(),
@@ -127,7 +127,7 @@ export const api = {
   createStaff: (data: {
     nombre: string;
     rol: string;
-    alias: string;
+    alias?: string | undefined;
     esExterno: boolean;
   }) =>
     fetch(`${API_URL}/staff`, {

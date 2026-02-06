@@ -2,12 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Plus, Trash2, Truck, User, Users, X } from "lucide-react";
 
 // --- INTERFACES ---
-interface Tarifa {
-  id: number;
-  nombre_vehiculo: string;
-  precio_particular: number;
-}
-
 export interface NuevoViajeData {
   clienteId: string;
   tipoTarifa: string;
