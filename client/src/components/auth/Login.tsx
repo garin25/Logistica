@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Truck, Lock, Mail, Loader2, User, Building2, AlertCircle, CheckCircle2, Eye, EyeOff } from 'lucide-react';
+import { Truck, Lock, Mail, Loader2, User, Building2, AlertCircle,Eye, EyeOff } from 'lucide-react';
 import { api } from '../../services/api';
+import { toast } from "sonner";
 
 interface LoginProps {
   onLoginSuccess: (user: any) => void;
@@ -10,7 +11,6 @@ export default function Login({ onLoginSuccess }: LoginProps) {
   const [isRegistering, setIsRegistering] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
   
   // Estado para visibilidad de contraseña
   const [showPassword, setShowPassword] = useState(false);
@@ -58,8 +58,6 @@ export default function Login({ onLoginSuccess }: LoginProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setSuccessMsg('');
 
     // Ejecutar validación antes de llamar a la API
     if (!validateForm()) return;
@@ -71,8 +69,10 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         // --- FLUJO DE REGISTRO ---
         await api.register({ nombre, email, password, nombreAgencia });
 
-        setSuccessMsg('¡Cuenta creada con éxito! Ingresa tus datos.');
+
+        toast.success("¡Cuenta creada! Por favor inicia sesión.");
         // Limpiar campos y cambiar a login
+        setError('');
         setPassword('');
         setConfirmacionPassword('');
         setIsRegistering(false);
@@ -82,11 +82,13 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         const data = await api.login(email, password);
         localStorage.setItem('logistics_token', data.token);
         localStorage.setItem('logistics_user', JSON.stringify(data.user));
+        toast.success(`Bienvenido de nuevo`);
         onLoginSuccess(data.user);
       }
     } catch (err: any) {
       console.error(err);
       setError(err.message || 'Ocurrió un error. Intenta nuevamente.');
+      toast.error(err.message || "Ocurrió un error inesperado");
     } finally {
       setLoading(false);
     }
@@ -110,12 +112,7 @@ export default function Login({ onLoginSuccess }: LoginProps) {
         </div>
 
         <div className="p-8">
-          {successMsg && (
-            <div className="mb-4 bg-green-50 text-green-700 p-3 rounded-lg text-sm text-center font-bold border border-green-200 flex items-center justify-center gap-2 animate-pulse">
-              <CheckCircle2 size={18} /> {successMsg}
-            </div>
-          )}
-
+  
           {error && (
             <div className="mb-4 bg-red-50 text-red-600 p-3 rounded-lg text-sm text-center font-medium border border-red-100 flex items-center justify-center gap-2">
               <AlertCircle size={18} /> {error}
@@ -218,7 +215,6 @@ export default function Login({ onLoginSuccess }: LoginProps) {
               onClick={() => {
                 setIsRegistering(!isRegistering);
                 setError('');
-                setSuccessMsg('');
               }}
               className="text-sm text-blue-600 font-bold hover:text-blue-700 hover:underline transition-all"
             >

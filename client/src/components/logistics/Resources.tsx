@@ -3,6 +3,7 @@ import { Truck, User, Building2, Pencil, Trash2 } from "lucide-react";
 import { Button } from "../ui/Button"; // Asegúrate de que la ruta sea correcta
 import { api } from "../../services/api"; // Importamos la API aquí
 import type { Config, Tarifa } from "../../types"; // Importamos los tipos
+import { toast } from "sonner";
 
 interface ResourcesProps {
   config: Config;
@@ -33,13 +34,13 @@ export const Resources: React.FC<ResourcesProps> = ({ config, onUpdate }) => {
 
   // --- HANDLERS VEHÍCULOS ---
 
-  const handleAddVehiculo = async (e: React.FormEvent) => {
+  const handleAddVehiculo = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newVehiculoName || !newPrecioParticular) return;
 
-    try {
+    // 1. Definimos la promesa con toda la lógica
+    const saveAction = async () => {
       if (editingVehiculoId) {
-        // Modo Edición
         await api.updateVehiculo(editingVehiculoId, {
           nombre: newVehiculoName,
           precioParticular: Number(newPrecioParticular),
@@ -47,31 +48,44 @@ export const Resources: React.FC<ResourcesProps> = ({ config, onUpdate }) => {
         });
         setEditingVehiculoId(null);
       } else {
-        // Modo Creación
         await api.createVehiculo({
           nombre: newVehiculoName,
           precioParticular: Number(newPrecioParticular),
           precioFabrica: Number(newPrecioFabrica),
         });
       }
-      // Limpiar y Recargar
+
+      // Limpieza de estados
       setNewVehiculoName("");
       setNewPrecioParticular("");
       setNewPrecioFabrica("");
-      onUpdate();
-    } catch (e) {
-      alert("Error al guardar vehículo");
-    }
+
+      // Recargar datos (Esperamos a que termine para mostrar el éxito)
+      await onUpdate();
+    };
+
+    // 2. Ejecutamos el Toast
+    toast.promise(saveAction(), {
+      loading: editingVehiculoId ? "Actualizando vehículo..." : "Creando vehículo...",
+      success: "Vehículo guardado correctamente",
+      error: "Error al guardar vehículo",
+    });
   };
 
-  const handleDeleteVehiculo = async (id: number) => {
+  const handleDeleteVehiculo = (id: number) => {
+    // El confirm nativo sigue siendo útil para prevenir clics accidentales
     if (!confirm("¿Estás seguro de borrar este vehículo?")) return;
-    try {
+
+    const deleteAction = async () => {
       await api.deleteVehiculo(id);
-      onUpdate();
-    } catch {
-      alert("No se puede borrar (posiblemente esté en uso).");
-    }
+      await onUpdate();
+    };
+
+    toast.promise(deleteAction(), {
+      loading: "Eliminando...",
+      success: "Vehículo eliminado",
+      error: "No se puede borrar (posiblemente esté en uso)",
+    });
   };
 
   const startEditingVehiculo = (t: Tarifa) => {
@@ -83,63 +97,87 @@ export const Resources: React.FC<ResourcesProps> = ({ config, onUpdate }) => {
 
   // --- HANDLERS STAFF ---
 
-  const handleAddStaff = async (e: React.FormEvent) => {
+  const handleAddStaff = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newStaffName) return;
-    try {
+
+    const createAction = async () => {
       await api.createStaff({
         nombre: newStaffName,
         rol: newStaffRole,
         alias: newStaffAlias,
         esExterno: newStaffExterno,
       });
+
       setNewStaffName("");
       setNewStaffAlias("");
       setNewStaffExterno(false);
-      onUpdate();
-    } catch (e) {
-      alert("Error al crear personal");
-    }
+      await onUpdate();
+    };
+
+    toast.promise(createAction(), {
+      loading: "Registrando personal...",
+      success: "Personal creado con éxito",
+      error: "Error al crear personal",
+    });
   };
 
-  const handleDeleteStaff = async (id: number) => {
+  const handleDeleteStaff = (id: number) => {
     if (!confirm("¿Borrar personal?")) return;
-    try {
-      await api.deleteStaff(id);
-      onUpdate();
-    } catch {
-      alert("No se puede borrar (tiene viajes asignados).");
-    }
+
+    toast.promise(
+      (async () => { // Truco: Función anónima autoejecutable si prefieres no declarar variable
+        await api.deleteStaff(id);
+        await onUpdate();
+      })(),
+      {
+        loading: "Eliminando...",
+        success: "Personal eliminado",
+        error: "No se puede borrar (tiene viajes asignados)",
+      }
+    );
   };
 
   // --- HANDLERS CLIENTES ---
 
-  const handleAddClient = async (e: React.FormEvent) => {
+  const handleAddClient = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newClientName) return;
-    try {
+
+    const createAction = async () => {
       await api.createCliente({
         nombre: newClientName,
         direccion: newClientAddress,
         tipoTarifa: newClientTarifa,
       });
+
       setNewClientName("");
       setNewClientAddress("");
       setNewClientTarifa("particular");
-      onUpdate();
-    } catch (e) {
-      alert("Error al crear cliente");
-    }
+      await onUpdate();
+    };
+
+    toast.promise(createAction(), {
+      loading: "Guardando cliente...",
+      success: "Cliente creado correctamente",
+      error: "Error al crear cliente",
+    });
   };
 
-  const handleDeleteClient = async (id: number) => {
+  const handleDeleteClient = (id: number) => {
     if (!confirm("¿Borrar cliente?")) return;
-    try {
-      await api.deleteCliente(id);
-      onUpdate();
-    } catch {
-      alert("No se puede borrar (tiene viajes).");
-    }
+
+    toast.promise(
+      async () => { // También puedes pasar la función async directa así
+        await api.deleteCliente(id);
+        await onUpdate();
+      },
+      {
+        loading: "Eliminando...",
+        success: "Cliente eliminado",
+        error: "No se puede borrar (tiene historial de viajes)",
+      }
+    );
   };
 
   return (
@@ -152,9 +190,8 @@ export const Resources: React.FC<ResourcesProps> = ({ config, onUpdate }) => {
 
         <form
           onSubmit={handleAddVehiculo}
-          className={`p-4 rounded-lg mb-6 border border-gray-100 grid gap-4 md:grid-cols-4 items-end transition-colors ${
-            editingVehiculoId ? "bg-blue-50 border-blue-200" : "bg-gray-50"
-          }`}
+          className={`p-4 rounded-lg mb-6 border border-gray-100 grid gap-4 md:grid-cols-4 items-end transition-colors ${editingVehiculoId ? "bg-blue-50 border-blue-200" : "bg-gray-50"
+            }`}
         >
           <div>
             <label className="text-xs font-bold text-gray-500 uppercase">
@@ -215,9 +252,8 @@ export const Resources: React.FC<ResourcesProps> = ({ config, onUpdate }) => {
               {config.tarifas?.map((t) => (
                 <tr
                   key={t.id}
-                  className={`transition-colors ${
-                    editingVehiculoId === t.id ? "bg-blue-50" : ""
-                  }`}
+                  className={`transition-colors ${editingVehiculoId === t.id ? "bg-blue-50" : ""
+                    }`}
                 >
                   <td className="p-3 font-bold text-gray-700">
                     {t.nombre_vehiculo}
@@ -334,11 +370,10 @@ export const Resources: React.FC<ResourcesProps> = ({ config, onUpdate }) => {
                   <td className="p-3 font-medium">{s.nombre}</td>
                   <td className="p-3">
                     <span
-                      className={`px-2 py-1 rounded text-xs font-bold ${
-                        s.rol === "chofer"
+                      className={`px-2 py-1 rounded text-xs font-bold ${s.rol === "chofer"
                           ? "bg-blue-100 text-blue-700"
                           : "bg-orange-100 text-orange-700"
-                      }`}
+                        }`}
                     >
                       {s.rol.toUpperCase()}
                     </span>
